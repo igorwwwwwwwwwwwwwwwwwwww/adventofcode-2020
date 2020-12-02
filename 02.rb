@@ -6,6 +6,8 @@ EOF
 
 input = File.read("02.txt")
 
+# part 1
+
 valid = 0
 
 input.lines.each do |line|
@@ -18,6 +20,26 @@ input.lines.each do |line|
 
   n = password.chars.select { |c| c == match_c }.count
   if n >= min && n <= max
+    valid += 1
+  end
+end
+
+puts valid
+
+# part 2
+
+valid = 0
+
+input.lines.each do |line|
+  m = /^(\d+)-(\d+) ([a-z]): (.*)$/.match(line)
+  raise "no match on #{line}" unless m
+  min = m[1].to_i
+  max = m[2].to_i
+  match_c  = m[3]
+  password = m[4]
+
+  # ^ is xor
+  if (password[min-1] == match_c) ^ (password[max-1] == match_c)
     valid += 1
   end
 end
