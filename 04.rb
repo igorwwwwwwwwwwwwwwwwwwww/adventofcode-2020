@@ -28,3 +28,26 @@ passports = input
 required = %w[byr iyr eyr hgt hcl ecl pid] # cid
 
 puts passports.select { |p| required.all? { |f| p[f] } }.size
+
+# part 2
+
+required = {
+  'byr' => lambda { |v| v.to_i && v.to_i >= 1920 && v.to_i <= 2002 },
+  'iyr' => lambda { |v| v.to_i && v.to_i >= 2010 && v.to_i <= 2020 },
+  'eyr' => lambda { |v| v.to_i && v.to_i >= 2020 && v.to_i <= 2030 },
+  'hgt' => lambda { |v|
+    if m = /^([0-9]+)(cm|in)$/.match(v)
+      if m[2] == 'cm'
+        m[1].to_i >= 150 && m[1].to_i <= 193
+      else # m[2] == 'in'
+        m[1].to_i >= 59 && m[1].to_i <= 76
+      end
+    end
+  },
+  'hcl' => lambda { |v| /^#[0-9a-f]{6}$/.match(v) },
+  'ecl' => lambda { |v| /^amb|blu|brn|gry|grn|hzl|oth$/.match(v) },
+  'pid' => lambda { |v| /^[0-9]{9}$/.match(v) },
+  # cid omitted
+}
+
+puts passports.select { |p| required.all? { |k, f| p[k] && f.call(p[k]) } }.size
