@@ -43,5 +43,15 @@ passes = input.lines.map { |line|
   [row, col, row*8+col]
 }
 
+# part 1
+
 # puts passes
 puts passes.map { |row, col, seat| seat }.max
+
+# part 2
+
+puts passes.map { |row, col, seat| seat }
+  .sort
+  .each_cons(2)
+  .find { |a, b| a+1 != b }
+  .first+1
