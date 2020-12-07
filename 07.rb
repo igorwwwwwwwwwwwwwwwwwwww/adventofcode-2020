@@ -12,6 +12,16 @@ faded blue bags contain no other bags.
 dotted black bags contain no other bags.
 EOF
 
+input = <<EOF
+shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.
+EOF
+
 input = File.read("07.txt")
 
 rules = {}
@@ -54,3 +64,16 @@ def self.reverse_lookup(reverse, bag, first = true)
 end
 
 puts reverse_lookup(reverse, 'shiny gold').size
+
+# part 2
+
+def self.lookup(rules, bag, first = true)
+  res = 0
+  res += 1 unless first
+  if rules[bag] && rules[bag].size > 0
+    res += rules[bag].map { |i, count| lookup(rules, i, false) * count }.reduce(:+)
+  end
+  res
+end
+
+puts lookup(rules, 'shiny gold')
