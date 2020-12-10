@@ -72,11 +72,24 @@ end
 # puts histogram
 puts histogram[1] * histogram[3]
 
-# part 2
+# part 1, nicer
 
-adapters = input.lines.map(&:to_i).sort
+adapters = [0]
+adapters += input.lines.map(&:to_i).sort
+adapters << adapters.last+3
+diffs = adapters.each_cons(2).map { |a, b| b-a }
+histogram = diffs.group_by { |v| v }.map { |k, v| [k, v.count] }.to_h
 
-def self.walk(adapters, jolts)
+puts histogram[1] * histogram[3]
+
+#
+
+puts "-"
+
+# part 2, slow
+
+def self.walk(adapters, jolts = 0)
+  # puts adapters.inspect
   return {} unless adapters.size > 0
   next_adapters = adapters.to_set & [jolts+1, jolts+2, jolts+3].to_set
   return {} unless next_adapters.size > 0
@@ -94,5 +107,20 @@ def self.walk_graph(graph, jolts_target, jolts = 0, path = [], paths = Set.new)
   paths
 end
 
-graph = walk(adapters, 0)
-puts walk_graph(graph, adapters.last).size
+# graph = walk(adapters)
+# puts walk_graph(graph, adapters.last).size
+
+# part 2, fast
+
+# i cheated. thank you stranger.
+# https://www.reddit.com/r/adventofcode/comments/ka8z8x/2020_day_10_solutions/gfb598d/
+
+adapters = input.lines.map(&:to_i).sort
+adapters.unshift(0)
+diffs = adapters.each_cons(2).map { |a, b| b-a }
+
+possibilities = { adapters.last => 1 }
+adapters[0..-2].reverse.each do |a|
+  possibilities[a] = [a+1, a+2, a+3].map { |x| possibilities[x] || 0 }.sum
+end
+puts possibilities[0]
