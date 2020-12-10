@@ -71,3 +71,30 @@ end
 
 # puts histogram
 puts histogram[1] * histogram[3]
+
+# part 2
+
+adapters = input.lines.map(&:to_i).sort
+built_in_adapter = adapters.max + 3
+adapters << built_in_adapter
+
+def self.walk(adapters, jolts)
+  return {} unless adapters.size > 0
+  next_adapters = adapters.to_set & [jolts+1, jolts+2, jolts+3].to_set
+  return {} unless next_adapters.size > 0
+  { jolts => next_adapters }.merge(next_adapters.map{ |n| walk(adapters[1..adapters.size], n)}.reduce(:merge))
+end
+
+def self.walk_graph(graph, jolts_target, jolts = 0, path = [], paths = Set.new)
+  if jolts == jolts_target
+    paths << path
+    return
+  end
+  graph[jolts].each do |next_jolt|
+    walk_graph(graph, jolts_target, next_jolt, path + [next_jolt], paths)
+  end
+  paths
+end
+
+graph = walk(adapters, 0)
+puts walk_graph(graph, built_in_adapter).size
