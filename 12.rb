@@ -1,3 +1,5 @@
+require 'matrix'
+
 input = <<EOF
 F10
 N3
@@ -45,6 +47,53 @@ actions.each do |action, val|
     else
       raise "invalid direction #{dir}"
     end
+  else
+    raise "invalid action #{action}"
+  end
+end
+
+puts (x.abs+y.abs)
+
+# part 2
+
+x = 0
+y = 0
+
+dx = 10
+dy = -1
+
+rotate = {
+  -270 => Matrix[[0, -1], [1, 0]],
+  -180 => Matrix[[-1, 0], [0, -1]],
+  -90  => Matrix[[0, 1], [-1, 0]],
+  0    => Matrix[[1, 0], [0, 1]],
+  90   => Matrix[[0, -1], [1, 0]],
+  180  => Matrix[[-1, 0], [0, -1]],
+  270  => Matrix[[0, 1], [-1, 0]],
+}
+
+actions.each do |action, val|
+  puts [action, val, 'x.y', x, y, 'dx.dy', dx, dy].join("\t")
+  case action
+  when "N"
+    dy -= val
+  when "S"
+    dy += val
+  when "E"
+    dx += val
+  when "W"
+    dx -= val
+  when "L"
+    raise "direction not divisible by 90" unless val % 90 == 0
+    r = rotate[-(val % 360)]
+    dx, dy = (r*Vector[dx, dy]).to_a
+  when "R"
+    raise "direction not divisible by 90" unless val % 90 == 0
+    r = rotate[(val % 360)]
+    dx, dy = (r*Vector[dx, dy]).to_a
+  when "F"
+    x += dx * val
+    y += dy * val
   else
     raise "invalid action #{action}"
   end
