@@ -14,7 +14,7 @@ import (
 	"github.com/google/gops/agent"
 )
 
-// 2.9667e+13 ops/sec
+// 1.277856e+14 ops/sec
 // (parallelism = 4, optimize factor = 29)
 
 // HACK: we increment in factors of 29, this keeps things aligned
@@ -74,7 +74,7 @@ func main() {
 		// HACK: we know the solution is > 100 trillion
 		// n := uint64(100000000000001 / unit)
 		// we can update this based on already checked numbers
-		n := uint64(104593140000000 / unit)
+		n := uint64(108994470000000 / unit)
 		for {
 			ch <- n
 			n++
@@ -88,14 +88,20 @@ func main() {
 				t_prev := t
 				max := t + unit
 				for t < max {
-					found := true
-					for _, p := range bus_pairs {
-						if (t+p.i)%p.val != 0 {
-							found = false
-							break
-						}
-					}
-					if found {
+					// found := true
+					// for _, p := range bus_pairs {
+					// 	if (t+p.i)%p.val != 0 {
+					// 		found = false
+					// 		break
+					// 	}
+					// }
+					// if found {
+					// 	done <- t
+					// 	break
+					// }
+
+					// [{19 41} {29 521} {37 23} {42 13} {46 17} {60 601} {66 37} {79 19}]
+					if (t+19)%41 == 0 && (t+29)%521 == 0 && (t+37)%23 == 0 && (t+42)%13 == 0 && (t+46)%17 == 0 && (t+60)%601 == 0 && (t+66)%37 == 0 && (t+79)%19 != 0 {
 						done <- t
 						break
 					}
