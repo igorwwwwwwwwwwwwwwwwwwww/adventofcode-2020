@@ -73,7 +73,7 @@ func main() {
 		// HACK: we know the solution is > 100 trillion
 		// n := uint64(100000000000001 / unit)
 		// we can update this based on already checked numbers
-		n := uint64(108460000000000 / unit)
+		n := uint64(112520000000000 / unit)
 		for {
 			ch <- n
 			n++
@@ -82,8 +82,8 @@ func main() {
 
 	for i := 0; i < runtime.NumCPU(); i++ {
 		go func() {
+			t_prev := uint64(0)
 			for {
-				t_prev := uint64(0)
 				t := <-ch * unit
 				max := t + unit
 				for t < max {
@@ -100,10 +100,11 @@ func main() {
 					}
 					t += 29 // HACK: buses[0] is 29, so we know we the result is a multiple of 29
 				}
-				fmt.Println(time.Now().Sub(start), t)
 				if t_prev != 0 {
 					throughput := float64(t-t_prev) / time.Now().Sub(start).Seconds()
-					fmt.Println("throughput (ops/s)", throughput)
+					fmt.Println(time.Now().Sub(start), t, throughput, "(ops/s)")
+				} else {
+					fmt.Println(time.Now().Sub(start), t)
 				}
 				t_prev = t
 			}
