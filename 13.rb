@@ -19,6 +19,12 @@ puts (current_t-earliest_t)*found
 
 # part 2
 
+# 7,13,x,x,59,x,31,19
+# y+0=7x,y+1=13x,y+4=59x,y+6=31x,y+7=19x
+# y=7x-0,y=13x-1,y=59x-4,y=31x-6,y=19x-7
+#
+# faster solution using extended euclid to compute lcm with offset
+
 bus_lines = input.lines[1].split(',').each_with_index.map { |v, i| if v == 'x' then [nil, i] else [v.to_i, i] end }
 
 # puts bus_lines.inspect
