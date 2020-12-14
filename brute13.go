@@ -14,7 +14,7 @@ import (
 	"github.com/google/gops/agent"
 )
 
-// 8.236e+09 ops/sec
+// 2.9667e+13 ops/sec
 // (parallelism = 4, optimize factor = 29)
 
 // HACK: we increment in factors of 29, this keeps things aligned
@@ -119,7 +119,7 @@ func main() {
 			<-ticker.C
 			t := atomic.LoadUint64(&ops)
 			m := atomic.LoadUint64(&maxAttempted)
-			log.Print(m, float64(t-t_prev)/interval.Seconds(), "(ops/s)")
+			fmt.Println(m, float64(t-t_prev)*interval.Seconds(), "(ops/s)")
 			t_prev = t
 		}
 	}()
