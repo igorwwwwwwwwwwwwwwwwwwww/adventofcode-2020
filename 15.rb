@@ -30,3 +30,31 @@ while t < 2020
 end
 
 puts n
+
+# part 2
+
+seen = {}
+t = 0
+n = 0
+
+starting.each do |n|
+  # puts n
+  seen[n] = [] unless seen[n]
+  seen[n] << t
+  t += 1
+end
+
+while t < 30000000
+  if seen[n] && seen[n].size > 1
+    n = seen[n][-1] - seen[n][-2]
+  else
+    n = 0
+  end
+
+  # puts n
+  seen[n] = [] unless seen[n]
+  seen[n] << t
+  t += 1
+end
+
+puts n
