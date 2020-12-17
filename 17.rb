@@ -25,6 +25,8 @@ end
 
 map = {}
 
+# part 1
+
 z = 0
 input.lines.each_with_index do |line, y|
   line.chars.each_with_index do |c, x|
@@ -104,3 +106,97 @@ end
 
 # render(steps(map, 3))
 puts steps(map, 6).values.flat_map(&:values).flat_map(&:values).select { |v| v }.size
+
+# part 2
+
+map = {}
+
+w = 0
+z = 0
+input.lines.each_with_index do |line, y|
+  line.chars.each_with_index do |c, x|
+    if c == '#'
+      set_nested(map, [w, z, y, x], true)
+    end
+  end
+end
+
+NEIGHBOR_OFFSETS4 = [-1, 0, 1]
+  .product([-1, 0, 1])
+  .product([-1, 0, 1])
+  .product([-1, 0, 1])
+  .map(&:flatten)
+  .reject { |v| v == [0, 0, 0, 0] }
+  .freeze
+
+def self.step4(map)
+  wmin = map.keys.min
+  wmax = map.keys.max
+  zmin = map.values.flat_map(&:keys).min
+  zmax = map.values.flat_map(&:keys).max
+  ymin = map.values.flat_map(&:values).flat_map(&:keys).min
+  ymax = map.values.flat_map(&:values).flat_map(&:keys).max
+  xmin = map.values.flat_map(&:values).flat_map(&:values).flat_map(&:keys).min
+  xmax = map.values.flat_map(&:values).flat_map(&:values).flat_map(&:keys).max
+
+  map2 = {}
+  (wmin-1..wmax+1).each do |w|
+    (zmin-1..zmax+1).each do |z|
+      (ymin-1..ymax+1).each do |y|
+        (xmin-1..xmax+1).each do |x|
+          active_neighbors = NEIGHBOR_OFFSETS4
+            .map { |dx, dy, dz, dw| get_nested(map, [w+dw, z+dz, y+dy, x+dx]) }
+            .select { |v| v }
+            .size
+          if get_nested(map, [w, z, y, x])
+            remains_active = active_neighbors == 2 || active_neighbors == 3
+            set_nested(map2, [w, z, y, x], remains_active)
+          else
+            becomes_active = active_neighbors == 3
+            set_nested(map2, [w, z, y, x], becomes_active)
+          end
+        end
+      end
+    end
+  end
+  map2
+end
+
+def self.steps4(map, n)
+  n.times do
+    map = step4(map)
+  end
+  map
+end
+
+def self.render4(map)
+  wmin = map.keys.min
+  wmax = map.keys.max
+  zmin = map.values.flat_map(&:keys).min
+  zmax = map.values.flat_map(&:keys).max
+  ymin = map.values.flat_map(&:values).flat_map(&:keys).min
+  ymax = map.values.flat_map(&:values).flat_map(&:keys).max
+  xmin = map.values.flat_map(&:values).flat_map(&:values).flat_map(&:keys).min
+  xmax = map.values.flat_map(&:values).flat_map(&:values).flat_map(&:keys).max
+
+  (wmin..wmax).each do |w|
+    (zmin..zmax).each do |z|
+      puts "z=#{z}, w=#{w}"
+      (ymin..ymax).each do |y|
+        line = []
+        (xmin..xmax).each do |x|
+          if get_nested(map, [w, z, y, x])
+            line << '#'
+          else
+            line << '.'
+          end
+        end
+        puts line.join
+      end
+      puts
+    end
+  end
+end
+
+# render4(steps4(map, 1))
+puts steps4(map, 6).values.flat_map(&:values).flat_map(&:values).flat_map(&:values).select { |v| v }.size
