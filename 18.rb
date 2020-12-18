@@ -11,6 +11,8 @@ input = File.read("18.txt")
 
 lines = input.lines.map(&:strip).reject { |line| line[0] == '#' }
 
+# part 1
+
 def self.read_subexp(tokens)
   level = 1
   sub = []
@@ -74,6 +76,65 @@ end
 results = lines.map do |line|
   tokens = line.gsub(' ', '').chars
   eval_tokens(tokens)
+end
+
+puts results.reduce(:+)
+
+# part 2
+
+precedences = { '+' => 1, '*' => 0 }
+
+results = lines.map do |line|
+  tokens = line.gsub(' ', '').chars
+
+  # false shunting yard, rpn, stack machine
+
+  out = []
+  ops = []
+  tokens.each do |t|
+    if /^-?(\d+)$/.match(t)
+      out << t.to_i
+    elsif ['+', '*'].include?(t)
+      while ops.last && ['+', '*'].include?(ops.last) && precedences[ops.last] >= precedences[t] && ops.last != '('
+        out << ops.pop
+      end
+      ops << t
+    elsif t == '('
+      ops << '('
+    elsif t == ')'
+      while ops.last && ops.last != '('
+        out << ops.pop
+      end
+      if ops.last == '('
+        ops.pop
+      end
+    end
+  end
+
+  while ops.last
+    out << ops.pop
+  end
+
+  # puts out.inspect
+
+  stack = []
+  out.each do |t|
+    if t.is_a?(Numeric)
+      stack << t
+    elsif t == '+'
+      stack << stack.pop + stack.pop
+    elsif t == '*'
+      stack << stack.pop * stack.pop
+    else
+      raise "invalid token #{t}"
+    end
+  end
+  res = stack.pop
+  raise unless stack.size == 0
+
+  # puts res
+
+  res
 end
 
 puts results.reduce(:+)
