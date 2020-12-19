@@ -33,7 +33,9 @@ grammar = sections[0].lines.map(&:strip).map { |line|
   [k.to_i, v]
 }.to_h
 
-def self.to_regexp(grammar, k)
+# part 1
+
+def self.to_regexp(grammar, k = 0)
   grammar[k]
     .map { |r|
       r.map { |t|
@@ -45,10 +47,61 @@ def self.to_regexp(grammar, k)
       }.join
     }
     .join('|')
-    .yield_self { |s| "(#{s})" }
+    .yield_self { |s| "(?:#{s})" }
 end
 
-r = Regexp.new('^' + to_regexp(grammar, 0) + '$')
+r = Regexp.new('^' + to_regexp(grammar) + '$')
+
+# puts r
+
+puts sections[1].lines.map(&:strip).select { |line| r.match(line) }.size
+
+# part 2
+
+grammar[8] = [[42], [42, 8]]
+grammar[11] = [[42, 31], [42, 11, 31]]
+
+# 8 => 42 | 42 8
+# 8 => 42+
+
+# 11 => 42 31 | 42 11 31
+# 11 => 42 11? 31
+# 11 => 42+ 31+         # (counts for 42 and 31 must match)
+#                       # (we can specialize on max input len)
+
+MAX_INPUT = sections[1].lines.map(&:strip).map(&:size).max
+
+# puts grammar.select { |k,v| v.flatten.include?(8) }
+# puts grammar.select { |k,v| v.flatten.include?(11) }
+
+# {8=>[[42], [42, 8]], 0=>[[8, 11]]}
+# {0=>[[8, 11]], 11=>[[42, 31], [42, 11, 31]]}
+
+# 0 => [[8, 11]]
+
+def self.to_regexp2(grammar, k = 0)
+  if k == 8
+    return '(?:' + to_regexp2(grammar, 42)+'+)'
+  end
+  if k == 11
+    return '(?:' + (1..MAX_INPUT).map { |i| '(?:' + to_regexp2(grammar, 42) + "{#{i}}" + ')(' + to_regexp2(grammar, 31) + "{#{i}}" + ')' }.join('|') + ')'
+  end
+
+  grammar[k]
+    .map { |r|
+      r.map { |t|
+        if Integer === t
+          to_regexp2(grammar, t)
+        else
+          Regexp.escape(t)
+        end
+      }.join
+    }
+    .join('|')
+    .yield_self { |s| "(?:#{s})" }
+end
+
+r = Regexp.new('^' + to_regexp2(grammar) + '$')
 
 # puts r
 
