@@ -315,34 +315,8 @@ flags = (0..15)
     t2 = apply_flags(t, flags)
     common_x.include?(t2[3]) && common_y.include?(t2[1])
   }
-  .last
+  .first
 
-puts "searching"
-
-# 16 bit = 2^16 = 65k -- easily brute forceable
-(0..15).each do |f11|
-  (0..15).each do |f01|
-    (0..15).each do |f10|
-      (0..15).each do |f00|
-        t00 = apply_flags(tiles[map[[0, 0]]], f00)
-        t10 = apply_flags(tiles[map[[1, 0]]], f10)
-        t01 = apply_flags(tiles[map[[0, 1]]], f01)
-        t11 = apply_flags(tiles[map[[1, 1]]], f11)
-
-        if t00[3] == t10[2] && t00[1] == t01[0] && t10[1] == t11[0] && t01[3] == t11[2]
-          puts "found"
-          puts [f00, f10, f01, f11].inspect
-          # break
-        end
-      end
-    end
-  end
-end
-
-puts "more"
-puts t.inspect
-puts common_x.inspect
-puts common_y.inspect
 puts (0..15)
   .select {|flags|
     common_x.include?(apply_flags(t, flags)[3]) && common_y.include?(apply_flags(t, flags)[1])
@@ -356,11 +330,21 @@ flags_map[[0, 0]] = flags
 # first, fill in the left y axis
 # lining up the bottom wall from the tile above, with the top wall of the current tile
 
+puts "y axis"
+
 (1..num_edge_tiles-1).each do |y|
+  puts y
   common_y = tiles[map[[0, y-1]]][1]
   t = tiles[map[[0, y]]]
 
   # this is returning 2 items each -- this is probably causing issues with prod data
+
+  puts (0..15)
+    .select {|flags|
+      apply_flags(t, flags)[0] == common_y
+    }
+    .map { |flags| [t, flags, apply_flags(t, flags)] }
+    .inspect
 
   flags = (0..15)
     .select {|flags|
@@ -431,13 +415,76 @@ end
   end
 end
 
-puts
-(0..num_edge_tiles-1).each do |y|
-  rendered_tiles = (0..num_edge_tiles-1).map do |x|
-    full_tiles[map[[x, y]]]
-  end
-  puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
-  puts
-end
+# puts
+# (0..num_edge_tiles-1).each do |y|
+#   rendered_tiles = (0..num_edge_tiles-1).map do |x|
+#     full_tiles[map[[x, y]]]
+#   end
+#   puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
+#   puts
+# end
 
 # part 2
+
+def self.apply_flags_trace(val, flags)
+  puts "< #{val} #{flags} #{(flags & 0b01)} #{(flags & 0b10)}"
+  val = val.dup
+  # bit 0 - vertical
+  if (flags & 0b01) == 0b01
+    puts "vertical"
+    val[0] = reverse_bits(val[0])
+    val[1] = reverse_bits(val[1])
+    val[2], val[3] = val[3], val[2]
+  end
+  # bit 1 - horizontal
+  if (flags & 0b10) == 0b10
+    puts "horizontal"
+    val[2] = reverse_bits(val[2])
+    val[3] = reverse_bits(val[3])
+    val[0], val[1] = val[1], val[0]
+  end
+  #   0        2
+  # 2   3 => 1   0
+  #   1        3
+  (flags >> 2).times do
+    puts "rotate"
+    val[0], val[1], val[2], val[3] = val[2], val[3], val[1], val[0]
+  end
+  puts "> #{val}"
+  val
+end
+
+puts "-"
+apply_flags_trace([85, 710, 271, 576], 2)
+puts "-"
+apply_flags_trace([85, 710, 271, 576], 8)
+
+# [[85, 710, 271, 576], 2, [710, 85, 962, 9]]
+#
+# 2 = 0b10 = flip horizontal
+#
+#   85
+# 271 576
+#   710
+#
+#   710
+# ~271 ~576
+#   85
+#
+# ---
+#
+# [[85, 710, 271, 576], 8, [710, 85, 576, 271]]
+#
+# 8 = 0b1000 = rotate 2x
+#
+#   85
+# 271 576
+#   710
+#
+#   271
+# 710 85
+#   576
+#
+#   710
+# 576 271
+#   85
