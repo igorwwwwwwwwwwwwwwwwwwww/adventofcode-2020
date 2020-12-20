@@ -114,7 +114,7 @@ EOF
 # sqrt(144) = 12
 # we need to make a 12x12 grid
 
-# input = File.read("20.txt")
+input = File.read("20.txt")
 
 tiles = input.split("\n\n").map(&:strip).map { |block|
   raise unless m = /^Tile (\d+):$/.match(block.lines[0])
@@ -222,5 +222,7 @@ puts tiles.keys
   .flat_map { |a_id, b_id| [[a_id, b_id], [b_id, a_id]] }
   .group_by { |x| x[0] }
   .map { |k, v| [k, v.map { |x| x[1] }.to_set] }
+  .select { |k, v| v.size == 2 }
   .to_h
-  .inspect
+  .keys
+  .reduce(:*)
