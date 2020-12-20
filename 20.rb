@@ -298,15 +298,55 @@ common_y = ((tiles[map[[0, 0]]].to_set + tiles[map[[0, 0]]].map { |v| reverse_bi
 # we want the common x wall to be on the right
 # ... and the common y wall to be on the bottom
 
+# TODO: look at the top left 4 full_tiles
+# find a combination that works for all of them.
+# we have 4 borders to consider:
+# - [[0,0], [1,0]]
+# - [[0,0], [0,1]]
+# - [[0,1], [1,1]]
+# - [[1,0], [1,1]]
+
 flags_map = {}
 
 t = tiles[map[[0, 0]]]
 
 flags = (0..15)
   .select {|flags|
-    common_x.include?(apply_flags(t, flags)[3]) && common_y.include?(apply_flags(t, flags)[1])
+    t2 = apply_flags(t, flags)
+    common_x.include?(t2[3]) && common_y.include?(t2[1])
   }
-  .first
+  .last
+
+puts "searching"
+
+# 16 bit = 2^16 = 65k -- easily brute forceable
+(0..15).each do |f11|
+  (0..15).each do |f01|
+    (0..15).each do |f10|
+      (0..15).each do |f00|
+        t00 = apply_flags(tiles[map[[0, 0]]], f00)
+        t10 = apply_flags(tiles[map[[1, 0]]], f10)
+        t01 = apply_flags(tiles[map[[0, 1]]], f01)
+        t11 = apply_flags(tiles[map[[1, 1]]], f11)
+
+        if t00[3] == t10[2] && t00[1] == t01[0] && t10[1] == t11[0] && t01[3] == t11[2]
+          puts "found"
+          puts [f00, f10, f01, f11].inspect
+          # break
+        end
+      end
+    end
+  end
+end
+
+puts "more"
+puts t.inspect
+puts common_x.inspect
+puts common_y.inspect
+puts (0..15)
+  .select {|flags|
+    common_x.include?(apply_flags(t, flags)[3]) && common_y.include?(apply_flags(t, flags)[1])
+  }.inspect
 
 tiles[map[[0, 0]]] = apply_flags(t, flags)
 flags_map[[0, 0]] = flags
@@ -320,6 +360,8 @@ flags_map[[0, 0]] = flags
   common_y = tiles[map[[0, y-1]]][1]
   t = tiles[map[[0, y]]]
 
+  # this is returning 2 items each -- this is probably causing issues with prod data
+
   flags = (0..15)
     .select {|flags|
       apply_flags(t, flags)[0] == common_y
@@ -332,8 +374,12 @@ end
 
 # and now we can complete the x axis
 
+puts "x axis"
+
 (0..num_edge_tiles-1).each do |y|
   (1..num_edge_tiles-1).each do |x|
+    puts [x, y].inspect
+
     common_x = tiles[map[[x-1, y]]][3]
     t = tiles[map[[x, y]]]
 
@@ -393,3 +439,5 @@ puts
   puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
   puts
 end
+
+# part 2
