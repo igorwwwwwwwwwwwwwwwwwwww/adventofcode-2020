@@ -114,7 +114,7 @@ EOF
 # sqrt(144) = 12
 # we need to make a 12x12 grid
 
-# input = File.read("20.txt")
+input = File.read("20.txt")
 
 tiles = input.split("\n\n").map(&:strip).map { |block|
   raise unless m = /^Tile (\d+):$/.match(block.lines[0])
@@ -173,7 +173,7 @@ def self.apply_flags(val, flags)
   # 2   3 => 1   0
   #   1        3
   (flags >> 2).times do
-    val[0], val[1], val[2], val[3] = val[2], val[3], val[1], val[0]
+    val[0], val[1], val[2], val[3] = reverse_bits(val[2]), reverse_bits(val[3]), val[1], val[0]
   end
   val
 end
@@ -317,11 +317,6 @@ flags = (0..15)
   }
   .first
 
-puts (0..15)
-  .select {|flags|
-    common_x.include?(apply_flags(t, flags)[3]) && common_y.include?(apply_flags(t, flags)[1])
-  }.inspect
-
 tiles[map[[0, 0]]] = apply_flags(t, flags)
 flags_map[[0, 0]] = flags
 
@@ -330,21 +325,9 @@ flags_map[[0, 0]] = flags
 # first, fill in the left y axis
 # lining up the bottom wall from the tile above, with the top wall of the current tile
 
-puts "y axis"
-
 (1..num_edge_tiles-1).each do |y|
-  puts y
   common_y = tiles[map[[0, y-1]]][1]
   t = tiles[map[[0, y]]]
-
-  # this is returning 2 items each -- this is probably causing issues with prod data
-
-  puts (0..15)
-    .select {|flags|
-      apply_flags(t, flags)[0] == common_y
-    }
-    .map { |flags| [t, flags, apply_flags(t, flags)] }
-    .inspect
 
   flags = (0..15)
     .select {|flags|
@@ -358,12 +341,8 @@ end
 
 # and now we can complete the x axis
 
-puts "x axis"
-
 (0..num_edge_tiles-1).each do |y|
   (1..num_edge_tiles-1).each do |x|
-    puts [x, y].inspect
-
     common_x = tiles[map[[x-1, y]]][3]
     t = tiles[map[[x, y]]]
 
@@ -415,76 +394,11 @@ end
   end
 end
 
-# puts
-# (0..num_edge_tiles-1).each do |y|
-#   rendered_tiles = (0..num_edge_tiles-1).map do |x|
-#     full_tiles[map[[x, y]]]
-#   end
-#   puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
-#   puts
-# end
-
-# part 2
-
-def self.apply_flags_trace(val, flags)
-  puts "< #{val} #{flags} #{(flags & 0b01)} #{(flags & 0b10)}"
-  val = val.dup
-  # bit 0 - vertical
-  if (flags & 0b01) == 0b01
-    puts "vertical"
-    val[0] = reverse_bits(val[0])
-    val[1] = reverse_bits(val[1])
-    val[2], val[3] = val[3], val[2]
+puts
+(0..num_edge_tiles-1).each do |y|
+  rendered_tiles = (0..num_edge_tiles-1).map do |x|
+    full_tiles[map[[x, y]]]
   end
-  # bit 1 - horizontal
-  if (flags & 0b10) == 0b10
-    puts "horizontal"
-    val[2] = reverse_bits(val[2])
-    val[3] = reverse_bits(val[3])
-    val[0], val[1] = val[1], val[0]
-  end
-  #   0        2
-  # 2   3 => 1   0
-  #   1        3
-  (flags >> 2).times do
-    puts "rotate"
-    val[0], val[1], val[2], val[3] = val[2], val[3], val[1], val[0]
-  end
-  puts "> #{val}"
-  val
+  puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
+  puts
 end
-
-puts "-"
-apply_flags_trace([85, 710, 271, 576], 2)
-puts "-"
-apply_flags_trace([85, 710, 271, 576], 8)
-
-# [[85, 710, 271, 576], 2, [710, 85, 962, 9]]
-#
-# 2 = 0b10 = flip horizontal
-#
-#   85
-# 271 576
-#   710
-#
-#   710
-# ~271 ~576
-#   85
-#
-# ---
-#
-# [[85, 710, 271, 576], 8, [710, 85, 576, 271]]
-#
-# 8 = 0b1000 = rotate 2x
-#
-#   85
-# 271 576
-#   710
-#
-#   271
-# 710 85
-#   576
-#
-#   710
-# 576 271
-#   85
