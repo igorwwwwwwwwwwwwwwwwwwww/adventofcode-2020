@@ -157,16 +157,23 @@ end
 
 def self.apply_flags(val, flags)
   val = val.dup
+  # bit 0 - horizontal
   if (flags & 0b01) == 0b01
     val[0] = reverse_bits(val[0])
     val[1] = reverse_bits(val[1])
+    val[2], val[3] = val[3], val[2]
   end
+  # bit 1 - vertical
   if (flags & 0b10) == 0b10
     val[2] = reverse_bits(val[2])
     val[3] = reverse_bits(val[3])
+    val[0], val[1] = val[1], val[0]
   end
+  #   0        2
+  # 2   3 => 1   0
+  #   1        3
   (flags >> 2).times do
-    val[0], val[1], val[2], val[3] = val[2], val[3], val[0], val[1]
+    val[0], val[1], val[2], val[3] = val[2], val[3], val[1], val[0]
   end
   val
 end
@@ -279,3 +286,39 @@ end
 puts
 puts grid.map { |row| row.join(' ') }.join("\n")
 puts
+
+opposite_walls = {
+  0 => 1,
+  1 => 0,
+  2 => 3,
+  3 => 2,
+}
+
+common_x = ((tiles[map[[0, 0]]].to_set) &
+               (tiles[map[[0, 1]]].to_set + tiles[map[[0, 1]]].map { |v| reverse_bits(v) }.to_set))
+              .first
+
+i = tiles[map[[0, 0]]].index(common_x)
+t = tiles[map[[0, 1]]]
+
+flags_x = (0..15)
+  .select {|flags|
+    apply_flags(t, flags)[opposite_walls[i]] == common_x
+  }
+
+common_y = ((tiles[map[[0, 0]]].to_set) &
+               (tiles[map[[1, 0]]].to_set + tiles[map[[1, 0]]].map { |v| reverse_bits(v) }.to_set))
+              .first
+
+i = tiles[map[[0, 0]]].index(common_y)
+t = tiles[map[[1, 0]]]
+
+flags_y = (0..15)
+  .select {|flags|
+    apply_flags(t, flags)[opposite_walls[i]] == common_y
+  }
+
+puts "x h " + flags_x.map { |flags| flags & 0b01 }.inspect
+puts "x v " + flags_x.map { |flags| flags & 0b10 }.inspect
+puts "y h " + flags_y.map { |flags| flags & 0b01 }.inspect
+puts "y v " + flags_y.map { |flags| flags & 0b10 }.inspect
