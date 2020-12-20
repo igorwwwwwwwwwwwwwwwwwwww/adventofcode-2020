@@ -227,32 +227,55 @@ puts adjacent
 
 map = {}
 placed = Set.new
+outer_frame = []
 
 n = corners.shift
-map[[0, 0]] = n
 placed << n
+outer_frame << n
 prev = n
 
-puts "edge: #{num_edge_tiles}"
-
-(1..((num_edge_tiles-1)*4)-1).each do |x|
-  puts x, n.inspect
-  puts adjacent[prev].inspect
-  if x % (num_edge_tiles-1) == 0
-    puts "select 2"
+(1..((num_edge_tiles-1)*4)-1).each do |i|
+  if i % (num_edge_tiles-1) == 0
     n = adjacent[prev].select { |n| adjacent[n].size == 2 }.reject { |n| placed.include?(n) }.first
   else
-    puts "select 3"
     n = adjacent[prev].select { |n| adjacent[n].size == 3 }.reject { |n| placed.include?(n) }.first
   end
-  puts "sizes: #{adjacent[prev].map { |n| adjacent[n].size }}"
-  puts "candidates: #{adjacent[prev].select { |n| adjacent[n].size == 2 }}"
-  puts "placed: #{placed}"
   raise "no next tile found" unless n
-  puts "selected: #{n}"
-  map[[x, 0]] = n
   placed << n
+  outer_frame << n
   prev = n
 end
 
-puts placed
+a, b, c, d = outer_frame.each_slice(num_edge_tiles-1).to_a
+a.each_with_index do |n, i|
+  map[[i, 0]] = n
+end
+b.each_with_index do |n, i|
+  map[[num_edge_tiles-1, i]] = n
+end
+c.each_with_index do |n, i|
+  map[[num_edge_tiles-1-i, num_edge_tiles-1]] = n
+end
+d.each_with_index do |n, i|
+  map[[0, num_edge_tiles-1-i]] = n
+end
+
+prev = map[[0, 0]]
+(1..num_edge_tiles-2).each do |y|
+  (1..num_edge_tiles-2).each do |x|
+    n = (adjacent[map[[x-1, y]]] & adjacent[map[[x, y-1]]]).reject { |n| placed.include?(n) }.first
+    raise unless n
+    placed << n
+    map[[x, y]] = n
+    prev = n
+  end
+end
+
+grid = (0..num_edge_tiles-1).map do |y|
+  (0..num_edge_tiles-1).map do |x|
+    map[[x, y]]
+  end
+end
+puts
+puts grid.map { |row| row.join(' ') }.join("\n")
+puts
