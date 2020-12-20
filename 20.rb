@@ -114,7 +114,7 @@ EOF
 # sqrt(144) = 12
 # we need to make a 12x12 grid
 
-input = File.read("20.txt")
+# input = File.read("20.txt")
 
 tiles = input.split("\n\n").map(&:strip).map { |block|
   raise unless m = /^Tile (\d+):$/.match(block.lines[0])
@@ -175,44 +175,15 @@ def self.matches?(a, b)
   a[0] == b[0] || a[1] == b[1] || a[2] == b[2] || a[3] == b[3]
 end
 
-# edge_len = Math.sqrt(tiles.size).to_i
-# (0..edge_len-1).each do |y|
-#   (0..edge_len-1).each do |x|
-#   end
-# end
-
-# tiles.each do |a_id, a|
-#   tiles.each do |b_id, b|
-#     next if a_id == b_id
-#   end
-# end
-
-# puts (0..(1<<4)-1).to_a.product(tiles[1951]).inspect
-#
-# puts (0..(1<<4)-1).map { |flags| apply_flags(tiles[1951], flags) }.inspect
-# puts (0..(1<<4)-1).map { |flags| apply_flags(tiles[2311], flags) }.inspect
-
-# puts tiles.keys
-#   .flat_map { |id| (0..(1<<4)-1).map { |flags| [id, flags] } }
-#   .permutation(2)
-#   .reject { |a, b| a[0] == b[0] }
-#   .select { |a, b|
-#     a_id, a_flags = a
-#     b_id, b_flags = b
-#     matches?(
-#       apply_flags(tiles[a_id], a_flags),
-#       apply_flags(tiles[b_id], b_flags),
-#     )
-#   }
-#   .map { |a, b| [a[0], b[0]] }
-#   .to_a
-#   .inspect
+num_edge_tiles = Math.sqrt(tiles.size).to_i
 
 # 1951    2311    3079
 # 2729    1427    2473
 # 2971    1489    1171
 
-puts tiles.keys
+# part 1
+
+adjacent = tiles.keys
   .permutation(2)
   .select { |a_id, b_id|
     a_set = tiles[a_id].to_set + tiles[a_id].map { |x| reverse_bits(x) }.to_set
@@ -222,7 +193,66 @@ puts tiles.keys
   .flat_map { |a_id, b_id| [[a_id, b_id], [b_id, a_id]] }
   .group_by { |x| x[0] }
   .map { |k, v| [k, v.map { |x| x[1] }.to_set] }
+  .to_h
+
+corners = adjacent
   .select { |k, v| v.size == 2 }
   .to_h
   .keys
-  .reduce(:*)
+
+puts "corners: #{corners.inspect}"
+puts corners.reduce(:*)
+
+# part 2
+
+# histogram of distribution
+# - 2 is a corner
+# - 3 is on a wall
+# - 4 is in the center
+#
+# example (3x3)
+#   {2=>4, 3=>4, 4=>1}
+#   4 corners, (3-2)*4 side, (3-2)*(3-2) center
+#
+# 20.txt (12x12)
+#   {2=>4, 3=>40, 4=>100}
+#   4 corners, (12-2)*4 side, (12-2)*(12-2) center
+
+puts adjacent
+  .group_by { |k, v| v.size }
+  .map { |k, v| [k, v.size] }
+  .sort_by { |k, v| k }
+  .to_h
+  .inspect
+
+map = {}
+placed = Set.new
+
+n = corners.shift
+map[[0, 0]] = n
+placed << n
+prev = n
+
+puts "edge: #{num_edge_tiles}"
+
+(1..((num_edge_tiles-1)*4)-1).each do |x|
+  puts x, n.inspect
+  puts adjacent[prev].inspect
+  if x % (num_edge_tiles-1) == 0
+    puts "select 2"
+    n = adjacent[prev].select { |n| adjacent[n].size == 2 }.reject { |n| placed.include?(n) }.first
+  else
+    puts "select 3"
+    n = adjacent[prev].select { |n| adjacent[n].size == 3 }.reject { |n| placed.include?(n) }.first
+  end
+  puts "sizes: #{adjacent[prev].map { |n| adjacent[n].size }}"
+  puts "candidates: #{adjacent[prev].select { |n| adjacent[n].size == 2 }}"
+  puts "placed: #{placed}"
+  raise "no next tile found" unless n
+  puts "selected: #{n}"
+  map[[x, 0]] = n
+  placed << n
+  prev = n
+end
+
+puts placed
