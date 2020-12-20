@@ -157,13 +157,13 @@ end
 
 def self.apply_flags(val, flags)
   val = val.dup
-  # bit 0 - horizontal
+  # bit 0 - vertical
   if (flags & 0b01) == 0b01
     val[0] = reverse_bits(val[0])
     val[1] = reverse_bits(val[1])
     val[2], val[3] = val[3], val[2]
   end
-  # bit 1 - vertical
+  # bit 1 - horizontal
   if (flags & 0b10) == 0b10
     val[2] = reverse_bits(val[2])
     val[3] = reverse_bits(val[3])
@@ -176,10 +176,6 @@ def self.apply_flags(val, flags)
     val[0], val[1], val[2], val[3] = val[2], val[3], val[1], val[0]
   end
   val
-end
-
-def self.matches?(a, b)
-  a[0] == b[0] || a[1] == b[1] || a[2] == b[2] || a[3] == b[3]
 end
 
 num_edge_tiles = Math.sqrt(tiles.size).to_i
@@ -285,7 +281,6 @@ grid = (0..num_edge_tiles-1).map do |y|
 end
 puts
 puts grid.map { |row| row.join(' ') }.join("\n")
-puts
 
 opposite_walls = {
   0 => 1,
@@ -294,31 +289,107 @@ opposite_walls = {
   3 => 2,
 }
 
-common_x = ((tiles[map[[0, 0]]].to_set) &
-               (tiles[map[[0, 1]]].to_set + tiles[map[[0, 1]]].map { |v| reverse_bits(v) }.to_set))
-              .first
-
-i = tiles[map[[0, 0]]].index(common_x)
-t = tiles[map[[0, 1]]]
-
-flags_x = (0..15)
-  .select {|flags|
-    apply_flags(t, flags)[opposite_walls[i]] == common_x
-  }
-
-common_y = ((tiles[map[[0, 0]]].to_set) &
+common_x = ((tiles[map[[0, 0]]].to_set + tiles[map[[0, 0]]].map { |v| reverse_bits(v) }.to_set) &
                (tiles[map[[1, 0]]].to_set + tiles[map[[1, 0]]].map { |v| reverse_bits(v) }.to_set))
-              .first
 
-i = tiles[map[[0, 0]]].index(common_y)
-t = tiles[map[[1, 0]]]
+common_y = ((tiles[map[[0, 0]]].to_set + tiles[map[[0, 0]]].map { |v| reverse_bits(v) }.to_set) &
+               (tiles[map[[0, 1]]].to_set + tiles[map[[0, 1]]].map { |v| reverse_bits(v) }.to_set))
 
-flags_y = (0..15)
+# we want the common x wall to be on the right
+# ... and the common y wall to be on the bottom
+
+flags_map = {}
+
+t = tiles[map[[0, 0]]]
+
+flags = (0..15)
   .select {|flags|
-    apply_flags(t, flags)[opposite_walls[i]] == common_y
+    common_x.include?(apply_flags(t, flags)[3]) && common_y.include?(apply_flags(t, flags)[1])
   }
+  .first
 
-puts "x h " + flags_x.map { |flags| flags & 0b01 }.inspect
-puts "x v " + flags_x.map { |flags| flags & 0b10 }.inspect
-puts "y h " + flags_y.map { |flags| flags & 0b01 }.inspect
-puts "y v " + flags_y.map { |flags| flags & 0b10 }.inspect
+tiles[map[[0, 0]]] = apply_flags(t, flags)
+flags_map[[0, 0]] = flags
+
+# now that we have the top left corner, we can use it as a reference
+
+# first, fill in the left y axis
+# lining up the bottom wall from the tile above, with the top wall of the current tile
+
+(1..num_edge_tiles-1).each do |y|
+  common_y = tiles[map[[0, y-1]]][1]
+  t = tiles[map[[0, y]]]
+
+  flags = (0..15)
+    .select {|flags|
+      apply_flags(t, flags)[0] == common_y
+    }
+    .first
+
+  tiles[map[[0, y]]] = apply_flags(t, flags)
+  flags_map[[0, y]] = flags
+end
+
+# and now we can complete the x axis
+
+(0..num_edge_tiles-1).each do |y|
+  (1..num_edge_tiles-1).each do |x|
+    common_x = tiles[map[[x-1, y]]][3]
+    t = tiles[map[[x, y]]]
+
+    flags = (0..15)
+      .select {|flags|
+        apply_flags(t, flags)[2] == common_x
+      }
+      .first
+
+    tiles[map[[x, y]]] = apply_flags(t, flags)
+    flags_map[[x, y]] = flags
+  end
+end
+
+# now everything should be rotated and aligned
+
+full_tiles = input.split("\n\n").map(&:strip).map { |block|
+  raise unless m = /^Tile (\d+):$/.match(block.lines[0])
+  id = m[1].to_i
+
+  frame = block.lines[1..-1].map(&:strip).map(&:chars)
+
+  [id, frame]
+}.to_h
+
+def self.apply_flags_tile(val, flags)
+  val = val.map(&:dup)
+  # bit 0 - vertical
+  if (flags & 0b01) == 0b01
+    val = val.map(&:reverse)
+  end
+  # bit 1 - horizontal
+  if (flags & 0b10) == 0b10
+    val = val.reverse
+  end
+  # rotate clockwise
+  (flags >> 2).times do
+    val = val.transpose.map(&:reverse)
+  end
+  val
+end
+
+# apply rotation to raw frames
+(0..num_edge_tiles-1).each do |y|
+  (0..num_edge_tiles-1).each do |x|
+    flags = flags_map[[x, y]]
+    id = map[[x, y]]
+    full_tiles[id] = apply_flags_tile(full_tiles[id], flags)
+  end
+end
+
+puts
+(0..num_edge_tiles-1).each do |y|
+  rendered_tiles = (0..num_edge_tiles-1).map do |x|
+    full_tiles[map[[x, y]]]
+  end
+  puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
+  puts
+end
