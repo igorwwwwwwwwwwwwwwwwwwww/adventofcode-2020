@@ -134,7 +134,7 @@ tiles = input.split("\n\n").map(&:strip).map { |block|
 }.to_h
 
 def self.reverse_bits(b)
-  b.to_s(2).reverse.to_i(2)
+  b.to_s(2).rjust(10, '0').reverse.to_i(2)
 end
 
 # rotate clockwise
@@ -219,7 +219,8 @@ puts tiles.keys
     b_set = tiles[b_id].to_set + tiles[b_id].map { |x| reverse_bits(x) }.to_set
     (a_set & b_set).size > 0
   }
+  .flat_map { |a_id, b_id| [[a_id, b_id], [b_id, a_id]] }
   .group_by { |x| x[0] }
-  .map { |k, v| [k, v.map { |v| v[1] }.to_set] }
+  .map { |k, v| [k, v.map { |x| x[1] }.to_set] }
   .to_h
   .inspect
