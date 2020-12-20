@@ -394,11 +394,83 @@ end
   end
 end
 
-puts
-(0..num_edge_tiles-1).each do |y|
+# puts
+# (0..num_edge_tiles-1).each do |y|
+#   rendered_tiles = (0..num_edge_tiles-1).map do |x|
+#     full_tiles[map[[x, y]]]
+#   end
+#   puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
+#   puts
+# end
+
+# part 2
+
+# puts
+# (0..num_edge_tiles-1).each do |y|
+#   rendered_tiles = (0..num_edge_tiles-1).map do |x|
+#     full_tiles[map[[x, y]]][1..8].map { |t| t[1..8] }
+#   end
+#   puts rendered_tiles.reduce { |a, b| a.zip([' ']*8).zip(b) }.map { |row| row.join }.join("\n")
+#   puts
+# end
+
+lines = (0..num_edge_tiles-1).map do |y|
   rendered_tiles = (0..num_edge_tiles-1).map do |x|
-    full_tiles[map[[x, y]]]
+    full_tiles[map[[x, y]]][1..8].map { |t| t[1..8] }
   end
-  puts rendered_tiles.reduce { |a, b| a.zip([' ']*10).zip(b) }.map { |row| row.join }.join("\n")
-  puts
+  rendered_tiles.reduce { |a, b| a.zip(b) }.map { |row| row.join }.join("\n")
 end
+raw_img = lines.join("\n")
+parsed_img = raw_img.lines.map(&:strip).map(&:chars)
+
+# 20x3
+sea_monster = <<EOF
+                  #
+#    ##    ##    ###
+ #  #  #  #  #  #
+EOF
+
+sea_monster_coords = sea_monster
+  .lines
+  .map(&:rstrip)
+  .each_with_index
+  .flat_map { |line, y|
+    line.chars.each_with_index.select { |c, x| c == '#' }.map { |c, x| [x, y] }
+  }
+
+# puts sea_monster_coords.inspect
+
+imgs = (0..15)
+  .map { |flags| apply_flags_tile(parsed_img, flags) }
+  .uniq
+  .map { |img|
+    monster_pixels = Set.new
+
+    (0..img.size-3-1).each do |y|
+      (0..img.first.size-20-1).each do |x|
+        found = sea_monster_coords.all? do |dx, dy|
+          img[y+dy][x+dx] == '#'
+        end
+        if found
+          sea_monster_coords.each do |dx, dy|
+            monster_pixels << [x+dx, y+dy]
+          end
+        end
+      end
+    end
+
+    [img, monster_pixels]
+  }
+  .select { |img, monster_pixels| monster_pixels.size > 0 }
+  .map { |img, monster_pixels|
+    img.each_with_index
+      .flat_map { |line, y|
+        line.each_with_index
+          .select { |c, x| c == '#' && !monster_pixels.include?([x, y]) }
+          .map { |c, x| [x, y] }
+      }
+      .size
+  }
+
+puts
+puts imgs.first.inspect
