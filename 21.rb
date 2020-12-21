@@ -64,7 +64,13 @@ safe_ingredients = ingredients
 
 # puts safe_ingredients.inspect
 
+# part 1
+
 puts ingredients
   .flat_map { |k, v| k.to_set & safe_ingredients }
   .map(&:size)
   .sum
+
+# part 2
+
+puts translations.sort_by { |k, v| v }.to_h.keys.join(',')
