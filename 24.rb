@@ -25,7 +25,7 @@ neswnwewnwnwseenwseesewsenwsweewe
 wseweeenwnesenwwwswnew
 EOF
 
-# input = File.read("24.txt")
+input = File.read("24.txt")
 
 # https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/AV0405/MARTIN/Hex.pdf
 
@@ -113,17 +113,12 @@ black_tiles = destinations.group_by { |v| v }.map { |k, v| [k, v.size] }.select 
   flip_to_white = Set.new
   flip_to_black = Set.new
 
-  (zmin-1..zmax+1).each do |z|
-    (ymin-1..ymax+1).each do |y|
-      (xmin-1..xmax+1).each do |x|
-        pos = [x, y, z]
-        neighbors_count = neighbors(pos).select { |n| black_tiles.include?(n) }.size
-        if black_tiles.include?(pos) && neighbors_count == 0 || neighbors_count > 2
-          flip_to_white << pos
-        elsif !black_tiles.include?(pos) && neighbors_count == 2
-          flip_to_black << pos
-        end
-      end
+  (black_tiles + black_tiles.flat_map { |pos| neighbors(pos) }.to_set).each do |pos|
+    neighbors_count = neighbors(pos).select { |n| black_tiles.include?(n) }.size
+    if black_tiles.include?(pos) && neighbors_count == 0 || neighbors_count > 2
+      flip_to_white << pos
+    elsif !black_tiles.include?(pos) && neighbors_count == 2
+      flip_to_black << pos
     end
   end
 
