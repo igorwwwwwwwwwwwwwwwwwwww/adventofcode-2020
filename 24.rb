@@ -103,13 +103,6 @@ end
 black_tiles = destinations.group_by { |v| v }.map { |k, v| [k, v.size] }.select { |k, v| v % 2 == 1 }.to_h.keys.to_set
 
 100.times do
-  xmin = black_tiles.map { |pos| pos[0] }.min
-  xmax = black_tiles.map { |pos| pos[0] }.max
-  ymin = black_tiles.map { |pos| pos[1] }.min
-  ymax = black_tiles.map { |pos| pos[1] }.max
-  zmin = black_tiles.map { |pos| pos[2] }.min
-  zmax = black_tiles.map { |pos| pos[2] }.max
-
   flip_to_white = Set.new
   flip_to_black = Set.new
 
